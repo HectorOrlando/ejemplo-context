@@ -1,4 +1,5 @@
-Claro, puedo explicarte el flujo de procesos de tu aplicación paso a paso. Vamos a dividirlo en secciones para entender mejor cada parte.
+Este es el flujo general de cómo se comunican las diferentes partes de tu aplicación. 
+Vamos a dividirlo en secciones para entender mejor cada parte.
 
 ### 1. **Inicialización de la Aplicación (_app.tsx):**
    - Este archivo es el punto de entrada de tu aplicación Next.js.
