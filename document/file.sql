@@ -1,10 +1,10 @@
 estos son los archivos de mi App:
 
 /** pages ***/
+
 // src/pages/_app.tsx
 
-import { UserProvider } from '@/context/UserContext';
-import '@/styles/globals.css'
+import { UserProvider } from '@/context/UserProvider';
 import type { AppProps } from 'next/app'
 
 export default function App({ Component, pageProps }: AppProps) {
@@ -16,40 +16,31 @@ export default function App({ Component, pageProps }: AppProps) {
 }
 
 // src/pages/index.tsx
-import { useUserState, useUserDispatch } from '../context/UserContext';
+import { useUserContext } from '../context/UserContext';
 
 const Home: React.FC = () => {
-  const { users } = useUserState();
-  const dispatch = useUserDispatch();
-
+  const { users, deleteUserById } = useUserContext(); // Utilizamos el hook para acceder al contexto
+  const { addUser } = useUserContext();
   const handleRemoveUser = (id: number) => {
-    // Eliminar usuario del contexto
-    dispatch({ type: 'REMOVE_USER', payload: { id } });
+    deleteUserById(id);
   };
 
   const handleAddUser = () => {
-    // Agregar nuevo usuario al contexto
-    const randomInt = (min:number, max:number) => {
-      return Math.floor(Math.random() * (max - min + 1)) + min;
-    };
-    
-    const numRandom = randomInt(10, 100);
-    const userNew = { id: numRandom, name: `name ${numRandom}` };
-    dispatch({ type: 'ADD_USER', payload: userNew });
+    addUser();
   };
 
   return (
     <div>
       <h1>Users</h1>
       <ul>
-        {users.map(user => (
+        {users.users.map(user => (
           <li key={user.id}>
             {user.name}{' '}
             <button onClick={() => handleRemoveUser(user.id)}>Remove</button>
           </li>
         ))}
       </ul>
-      <hr/>
+      <hr />
       <button onClick={handleAddUser}>Add User</button>
     </div>
   );
@@ -58,20 +49,22 @@ const Home: React.FC = () => {
 export default Home;
 
 
-/*** Context  ***/
-// src/contexts/UserContext.tsx
-import { createContext, useReducer, useContext, ReactNode, Dispatch, useEffect } from 'react';
+
+
+/****** interfaces ****/
+
+// src/interfaces/user.ts
 
 // Definición del tipo de usuario
-export type User = {
+export interface User {
     id: number;
     name: string;
-};
+}
 
 // Estado inicial del contexto
-export type UserState = {
+export interface UserState {
     users: User[];
-};
+}
 
 // Acciones posibles
 export type UserAction =
@@ -79,32 +72,59 @@ export type UserAction =
     | { type: 'REMOVE_USER'; payload: { id: number } }
     | { type: 'SET_USERS'; payload: User[] };
 
-// Dispatch personalizado para las acciones
-export type UserDispatch = Dispatch<UserAction>;
+
+
+/*** Context  ***/
+
+// src/contexts/UserContext.tsx
+
+import { createContext, useContext } from 'react';
+import { UserState } from '../interfaces/user';
+
+interface ContextProps {
+    users: UserState;
+    deleteUserById: (id: number) => void;
+    addUser: () => void;
+}
 
 // Contexto del estado de usuario
-const UserStateContext = createContext<UserState | undefined>(undefined);
+export const UserContext = createContext<ContextProps | undefined>(undefined);
 
-// Contexto del dispatch de usuario
-const UserDispatchContext = createContext<UserDispatch | undefined>(undefined);
-
-// Función reductora para manejar las acciones
-const userReducer = (state: UserState, action: UserAction): UserState => {
-    switch (action.type) {
-        case 'ADD_USER':
-            return { users: [...state.users, action.payload] };
-        case 'REMOVE_USER':
-            return { users: state.users.filter(user => user.id !== action.payload.id) };
-        case 'SET_USERS':
-            return { users: action.payload };
-        default:
-            return state;
+// Hook para acceder al contexto de usuario
+export const useUserContext = (): ContextProps => {
+    const context = useContext(UserContext);
+    if (!context) {
+        throw new Error('useUserContext must be used within a UserProvider');
     }
+    return context;
 };
 
+
+// src/contexts/UserProvider.tsx
+
+import { FC, PropsWithChildren, useEffect, useReducer } from 'react';
+import { userReducer } from './userReducer';
+import { UserContext } from './UserContext';
+
 // Proveedor del contexto de usuario
-export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+export const UserProvider: FC<PropsWithChildren> = ({ children }) => {
     const [state, dispatch] = useReducer(userReducer, { users: [] });
+
+    const deleteUserById = (id: number) => {
+        dispatch({ type: 'REMOVE_USER', payload: { id } });
+    };
+
+    const addUser = () => {
+        // Agregar nuevo usuario al contexto
+        const randomInt = (min: number, max: number) => {
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        };
+
+        const numRandom = randomInt(10, 100);
+        const userNew = { id: numRandom, name: `name ${numRandom}` };
+
+        dispatch({ type: 'ADD_USER', payload: userNew });
+    }
 
     // Agregar listaUsuario al contexto al inicializar
     useEffect(() => {
@@ -120,65 +140,31 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }, []);
 
     return (
-        <UserStateContext.Provider value={state}>
-            <UserDispatchContext.Provider value={dispatch}>
-                {children}
-            </UserDispatchContext.Provider>
-        </UserStateContext.Provider>
+        <UserContext.Provider value={{
+            users: state,
+            deleteUserById,
+            addUser
+        }}>
+            {children}
+        </UserContext.Provider>
     );
 };
 
-// Hook para acceder al estado de usuario
-export const useUserState = (): UserState => {
-    const context = useContext(UserStateContext);
-    if (context === undefined) {
-        throw new Error('useUserState must be used within a UserProvider');
-    }
-    return context;
-};
-
-// Hook para acceder al dispatch de usuario
-export const useUserDispatch = (): UserDispatch => {
-    const context = useContext(UserDispatchContext);
-    if (context === undefined) {
-        throw new Error('useUserDispatch must be used within a UserProvider');
-    }
-    return context;
-};
-
-// src/contexts/UserProvider.tsx
-import { FC, ReactNode } from 'react';
-import { UserProvider } from './UserContext';
-
-// Propiedades del componente de proveedor de usuario
-interface UserProviderProps {
-    children: ReactNode;
-}
-
-// Componente de proveedor de usuario
-const AppUserProvider: FC<UserProviderProps> = ({ children }) => {
-    return <UserProvider>{children}</UserProvider>;
-};
-
-export default AppUserProvider;
 
 // src/contexts/userReducer.ts
-import { UserState, UserAction } from './UserContext';
+
+import { UserAction, UserState } from '../interfaces/user';
 
 // Función reductora para manejar las acciones
-const userReducer = (state: UserState, action: UserAction): UserState => {
+export const userReducer = (state: UserState, action: UserAction): UserState => {
     switch (action.type) {
         case 'ADD_USER':
             return { users: [...state.users, action.payload] };
         case 'REMOVE_USER':
             return { users: state.users.filter(user => user.id !== action.payload.id) };
+        case 'SET_USERS':
+            return { users: action.payload };
         default:
             return state;
     }
 };
-
-export default userReducer;
-
-
-
-

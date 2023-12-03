@@ -1,38 +1,29 @@
 // src/pages/index.tsx
-import { useUserState, useUserDispatch } from '../context/UserContext';
+import { useUserContext } from '../context/UserContext';
 
 const Home: React.FC = () => {
-  const { users } = useUserState();
-  const dispatch = useUserDispatch();
-
+  const { users, deleteUserById } = useUserContext(); // Utilizamos el hook para acceder al contexto
+  const { addUser } = useUserContext();
   const handleRemoveUser = (id: number) => {
-    // Eliminar usuario del contexto
-    dispatch({ type: 'REMOVE_USER', payload: { id } });
+    deleteUserById(id);
   };
 
   const handleAddUser = () => {
-    // Agregar nuevo usuario al contexto
-    const randomInt = (min:number, max:number) => {
-      return Math.floor(Math.random() * (max - min + 1)) + min;
-    };
-    
-    const numRandom = randomInt(10, 100);
-    const userNew = { id: numRandom, name: `name ${numRandom}` };
-    dispatch({ type: 'ADD_USER', payload: userNew });
+    addUser();
   };
 
   return (
     <div>
       <h1>Users</h1>
       <ul>
-        {users.map(user => (
+        {users.users.map(user => (
           <li key={user.id}>
             {user.name}{' '}
             <button onClick={() => handleRemoveUser(user.id)}>Remove</button>
           </li>
         ))}
       </ul>
-      <hr/>
+      <hr />
       <button onClick={handleAddUser}>Add User</button>
     </div>
   );
