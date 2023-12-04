@@ -6,7 +6,10 @@ import { UserContext } from './UserContext';
 
 // Proveedor del contexto de usuario
 export const UserProvider: FC<PropsWithChildren> = ({ children }) => {
+    // Aquí se usa el useReducer para inicializar tu estado y obtener la función dispatch
     const [state, dispatch] = useReducer(userReducer, { users: [] });
+
+    // Define las funciones deleteUserById y addUser que se proporcionarán en el contexto.
 
     const deleteUserById = (id: number) => {
         dispatch({ type: 'REMOVE_USER', payload: { id } });

@@ -4,7 +4,9 @@ import { createContext, useContext } from 'react';
 import { UserState } from '../interfaces/user';
 
 interface ContextProps {
+    // Estados
     users: UserState;
+    // Métodos
     deleteUserById: (id: number) => void;
     addUser: () => void;
 }

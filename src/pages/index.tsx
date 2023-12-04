@@ -2,8 +2,8 @@
 import { useUserContext } from '../context/UserContext';
 
 const Home: React.FC = () => {
-  const { users, deleteUserById } = useUserContext(); // Utilizamos el hook para acceder al contexto
-  const { addUser } = useUserContext();
+  const { users, deleteUserById, addUser } = useUserContext(); // Utilizamos el hook para acceder al contexto
+  
   const handleRemoveUser = (id: number) => {
     deleteUserById(id);
   };
