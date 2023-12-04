@@ -42,7 +42,9 @@ export const UserProvider: FC<PropsWithChildren> = ({ children }) => {
 
     return (
         <UserContext.Provider value={{
+            // Estados
             users: state,
+            // Métodos
             deleteUserById,
             addUser
         }}>

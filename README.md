@@ -75,14 +75,22 @@ Puedes seguir estos pasos en un orden lógico para desarrollar la funcionalidad 
 ```typescript
 // src/interfaces/user.ts
 
+// Definición del tipo de usuario
 export interface User {
-  id: number;
-  name: string;
+    id: number;
+    name: string;
 }
 
+// Estado inicial del contexto
 export interface UserState {
-  users: User[];
+    users: User[];
 }
+
+// Acciones posibles
+export type UserAction =
+    | { type: 'ADD_USER'; payload: User }
+    | { type: 'REMOVE_USER'; payload: { id: number } }
+    | { type: 'SET_USERS'; payload: User[] };
 ```
 
 2. **src/contexts/userReducer.ts:**
@@ -117,19 +125,23 @@ import { createContext, useContext } from 'react';
 import { UserState } from '../interfaces/user';
 
 interface ContextProps {
-  users: UserState;
-  deleteUserById: (id: number) => void;
-  addUser: () => void;
+    // Estados
+    users: UserState;
+    // Métodos
+    deleteUserById: (id: number) => void;
+    addUser: () => void;
 }
 
+// Contexto del estado de usuario
 export const UserContext = createContext<ContextProps | undefined>(undefined);
 
+// Hook para acceder al contexto de usuario
 export const useUserContext = (): ContextProps => {
-  const context = useContext(UserContext);
-  if (!context) {
-    throw new Error('useUserContext must be used within a UserProvider');
-  }
-  return context;
+    const context = useContext(UserContext);
+    if (!context) {
+        throw new Error('useUserContext must be used within a UserProvider');
+    }
+    return context;
 };
 ```
 
@@ -143,48 +155,55 @@ import { FC, PropsWithChildren, useEffect, useReducer } from 'react';
 import { userReducer } from './userReducer';
 import { UserContext } from './UserContext';
 
+// Proveedor del contexto de usuario
 export const UserProvider: FC<PropsWithChildren> = ({ children }) => {
-  const [state, dispatch] = useReducer(userReducer, { users: [] });
+    // Aquí se usa el useReducer para inicializar tu estado y obtener la función dispatch
+    const [state, dispatch] = useReducer(userReducer, { users: [] });
 
-  const deleteUserById = (id: number) => {
-    dispatch({ type: 'REMOVE_USER', payload: { id } });
-  };
+    // Define las funciones deleteUserById y addUser que se proporcionarán en el contexto.
 
-  const addUser = () => {
-    // Agregar nuevo usuario al contexto
-    const randomInt = (min: number, max: number) => {
-      return Math.floor(Math.random() * (max - min + 1)) + min;
+    const deleteUserById = (id: number) => {
+        dispatch({ type: 'REMOVE_USER', payload: { id } });
     };
 
-    const numRandom = randomInt(10, 100);
-    const userNew = { id: numRandom, name: `name ${numRandom}` };
+    const addUser = () => {
+        // Agregar nuevo usuario al contexto
+        const randomInt = (min: number, max: number) => {
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        };
 
-    dispatch({ type: 'ADD_USER', payload: userNew });
-  }
+        const numRandom = randomInt(10, 100);
+        const userNew = { id: numRandom, name: `name ${numRandom}` };
 
-  // Agregar listaUsuario al contexto al inicializar
-  useEffect(() => {
-    const listaUsuario = [
-      { id: 1, name: 'name 1' },
-      { id: 2, name: 'name 2' },
-      { id: 3, name: 'name 3' },
-      { id: 4, name: 'name 4' },
-      { id: 5, name: 'name 5' },
-    ];
+        dispatch({ type: 'ADD_USER', payload: userNew });
+    }
 
-    dispatch({ type: 'SET_USERS', payload: listaUsuario });
-  }, []);
+    // Agregar listaUsuario al contexto al inicializar
+    useEffect(() => {
+        const listaUsuario = [
+            { id: 1, name: 'name 1' },
+            { id: 2, name: 'name 2' },
+            { id: 3, name: 'name 3' },
+            { id: 4, name: 'name 4' },
+            { id: 5, name: 'name 5' },
+        ];
 
-  return (
-    <UserContext.Provider value={{
-      users: state,
-      deleteUserById,
-      addUser
-    }}>
-      {children}
-    </UserContext.Provider>
-  );
+        dispatch({ type: 'SET_USERS', payload: listaUsuario });
+    }, []);
+
+    return (
+        <UserContext.Provider value={{
+            // Estados
+            users: state,
+            // Métodos
+            deleteUserById,
+            addUser
+        }}>
+            {children}
+        </UserContext.Provider>
+    );
 };
+
 ```
 
 5. **src/pages/_app.tsx:**
